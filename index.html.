@@ -1,76 +1,130 @@
-import pygame
-import random
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niskala: Gerbang Jagat Lelembut</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; }
+        canvas { display: block; cursor: none; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: white;
+            text-shadow: 2px 2px 4px #000; pointer-events: none;
+        }
+        .bar-container { width: 200px; height: 15px; background: #333; border: 2px solid #555; margin-top: 5px; }
+        #sanity-bar { width: 100%; height: 100%; background: #c00; transition: width 0.2s; }
+        #msg { position: absolute; bottom: 50px; width: 100%; text-align: center; color: red; font-size: 20px; display: none; }
+    </style>
+</head>
+<body>
 
-# Inisialisasi
-pygame.init()
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Niskala: Gerbang Jagat Lelembut - Prototype")
+<div id="ui">
+    <div><b>MISI:</b> Cari 3 Keris Pusaka</div>
+    <div>KEWARASAN (SANITY)</div>
+    <div class="bar-container"><div id="sanity-bar"></div></div>
+    <p><small>[W,A,S,D] Bergerak | [Klik] Nyalakan Senter</small></p>
+</div>
+<div id="msg">KAMU KEHILANGAN KESADARAN...</div>
 
-# Warna
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (200, 0, 0)
-GRAY = (50, 50, 50)
+<canvas id="gameCanvas"></canvas>
 
-# Variabel Player
-player_pos = [WIDTH//2, HEIGHT//2]
-sanity = 100
-flashlight_on = True
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const sanityBar = document.getElementById('sanity-bar');
+const msg = document.getElementById('msg');
 
-# Simulasi Hantu
-ghost_pos = [random.randint(0, WIDTH), random.randint(0, HEIGHT)]
-ghost_visible = False
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-running = True
-clock = pygame.time.Clock()
+// Status Player
+const player = { x: canvas.width/2, y: canvas.height/2, speed: 4, sanity: 100 };
+const mouse = { x: 0, y: 0 };
+let flashlightOn = true;
 
-while running:
-    screen.fill(BLACK)
-    
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_f:  # Tekan F untuk senter
-                flashlight_on = not flashlight_on
+// Data Hantu (Pocong)
+const ghosts = [
+    { x: Math.random() * canvas.width, y: Math.random() * canvas.height, active: true, size: 30 }
+];
 
-    # Kontrol Player
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]: player_pos[1] -= 3
-    if keys[pygame.K_s]: player_pos[1] += 3
-    if keys[pygame.K_a]: player_pos[0] -= 3
-    if keys[pygame.K_d]: player_pos[0] += 3
+// Event Listeners
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mousedown', () => { flashlightOn = !flashlightOn; });
+const keys = {};
+window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
-    # Logika Senter (Hanya memperlihatkan sekitar player)
-    mouse_pos = pygame.mouse.get_pos()
-    
-    if flashlight_on:
-        # Efek Senter (Lingkaran cahaya)
-        pygame.draw.circle(screen, GRAY, player_pos, 150)
-    
-    # Render Player
-    pygame.draw.circle(screen, WHITE, player_pos, 10)
+function update() {
+    if (player.sanity <= 0) return;
 
-    # Logika Hantu (Muncul jika Sanity rendah)
-    distance_to_ghost = ((player_pos[0]-ghost_pos[0])**2 + (player_pos[1]-ghost_pos[1])**2)**0.5
-    if distance_to_ghost < 100 and flashlight_on:
-        ghost_visible = True
-        sanity -= 0.5  # Sanity berkurang jika melihat hantu
-    else:
-        ghost_visible = False
+    // Gerakan Player
+    if (keys['w']) player.y -= player.speed;
+    if (keys['s']) player.y += player.speed;
+    if (keys['a']) player.x -= player.speed;
+    if (keys['d']) player.x += player.speed;
 
-    if ghost_visible:
-        pygame.draw.circle(screen, RED, ghost_pos, 20) # Representasi hantu
+    // Logika Hantu
+    ghosts.forEach(g => {
+        let dx = g.x - player.x;
+        let dy = g.y - player.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
 
-    # UI Sanity
-    pygame.draw.rect(screen, RED, (20, 20, sanity * 2, 20))
-    
-    if sanity <= 0:
-        print("Karaktermu Gila! Game Over.")
-        running = False
+        // Jika hantu terkena cahaya senter dan jarak dekat
+        if (dist < 200 && flashlightOn) {
+            player.sanity -= 0.3;
+            // Hantu perlahan mendekat
+            g.x -= dx * 0.01;
+            g.y -= dy * 0.01;
+        }
+    });
 
-    pygame.display.flip()
-    clock.tick(60)
+    sanityBar.style.width = player.sanity + "%";
+    if (player.sanity <= 0) msg.style.display = "block";
+}
 
-pygame.quit()
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. Gambar Hantu (Latar Belakang Gelap)
+    ghosts.forEach(g => {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.beginPath();
+        ctx.ellipse(g.x, g.y, 15, 40, 0, 0, Math.PI * 2); // Bentuk lonjong seperti Pocong
+        ctx.fill();
+        // Mata merah
+        ctx.fillStyle = "red";
+        ctx.fillRect(g.x-5, g.y-20, 3, 3);
+        ctx.fillRect(g.x+2, g.y-20, 3, 3);
+    });
+
+    // 2. Efek Kegelapan & Senter (Masking)
+    ctx.save();
+    ctx.fillStyle = "black";
+    if (flashlightOn) {
+        // Membuat lubang cahaya di kegelapan
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        ctx.arc(player.x, player.y, 150, 0, Math.PI * 2, true);
+        ctx.fill();
+    } else {
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.restore();
+
+    // 3. Gambar Karakter Utama
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    requestAnimationFrame(() => {
+        update();
+        draw();
+    });
+}
+
+draw();
+</script>
+</body>
+</html>
+

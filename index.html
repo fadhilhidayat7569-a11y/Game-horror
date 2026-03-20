@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUBG Sensitivity Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 { text-align: center; color: #f39c12; }
+        .section { margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .section-title { font-weight: bold; margin-bottom: 10px; color: #3498db; }
+        .row { display: flex; align-items: center; margin-bottom: 10px; }
+        .label { flex: 2; font-size: 14px; }
+        input[type="range"] { flex: 3; cursor: pointer; }
+        .value-box { flex: 1; text-align: right; font-weight: bold; color: #f39c12; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #2ecc71; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>PUBG Settings 🎯</h1>
+    
+    <div class="section">
+        <div class="section-title">Camera Sensitivity (Free Look)</div>
+        <div class="row">
+            <div class="label">3rd Person (No Scope)</div>
+            <input type="range" min="1" max="300" value="120" oninput="updateVal(this, 'c1')">
+            <div class="value-box" id="c1">120%</div>
+        </div>
+        <div class="row">
+            <div class="label">1st Person (No Scope)</div>
+            <input type="range" min="1" max="300" value="100" oninput="updateVal(this, 'c2')">
+            <div class="value-box" id="c2">100%</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ADS Sensitivity</div>
+        <div class="row">
+            <div class="label">Red Dot, Holo, Aim Assist</div>
+            <input type="range" min="1" max="300" value="60" oninput="updateVal(this, 'a1')">
+            <div class="value-box" id="a1">60%</div>
+        </div>
+        <div class="row">
+            <div class="label">3x Scope</div>
+            <input type="range" min="1" max="300" value="25" oninput="updateVal(this, 'a2')">
+            <div class="value-box" id="a2">25%</div>
+        </div>
+        <div class="row">
+            <div class="label">6x Scope</div>
+            <input type="range" min="1" max="300" value="12" oninput="updateVal(this, 'a3')">
+            <div class="value-box" id="a3">12%</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Gyroscope Sensitivity</div>
+        <div class="row">
+            <div class="label">3rd Person (No Scope)</div>
+            <input type="range" min="1" max="400" value="300" oninput="updateVal(this, 'g1')">
+            <div class="value-box" id="g1">300%</div>
+        </div>
+    </div>
+
+    <button onclick="saveSettings()">Simpan Konfigurasi</button>
+</div>
+
+<script>
+    function updateVal(slider, targetId) {
+        document.getElementById(targetId).innerText = slider.value + "%";
+    }
+
+    function saveSettings() {
+        alert("Konfigurasi berhasil disimpan di memori lokal browser!");
+        // Di sini kamu bisa menambahkan logika untuk menyimpan ke LocalStorage 
+        // atau mengekspornya sebagai file teks.
+    }
+</script>
+
+</body>
+</html>

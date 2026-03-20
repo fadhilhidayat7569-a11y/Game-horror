@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niskala: Gerbang Jagat Lelembut</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; }
+        canvas { display: block; cursor: none; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: white;
+            text-shadow: 2px 2px 4px #000; pointer-events: none;
+        }
+        .bar-container { width: 200px; height: 15px; background: #333; border: 2px solid #555; margin-top: 5px; }
+        #sanity-bar { width: 100%; height: 100%; background: #c00; transition: width 0.2s; }
+        #msg { position: absolute; bottom: 50px; width: 100%; text-align: center; color: red; font-size: 20px; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <div><b>MISI:</b> Cari 3 Keris Pusaka</div>
+    <div>KEWARASAN (SANITY)</div>
+    <div class="bar-container"><div id="sanity-bar"></div></div>
+    <p><small>[W,A,S,D] Bergerak | [Klik] Nyalakan Senter</small></p>
+</div>
+<div id="msg">KAMU KEHILANGAN KESADARAN...</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const sanityBar = document.getElementById('sanity-bar');
+const msg = document.getElementById('msg');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Status Player
+const player = { x: canvas.width/2, y: canvas.height/2, speed: 4, sanity: 100 };
+const mouse = { x: 0, y: 0 };
+let flashlightOn = true;
+
+// Data Hantu (Pocong)
+const ghosts = [
+    { x: Math.random() * canvas.width, y: Math.random() * canvas.height, active: true, size: 30 }
+];
+
+// Event Listeners
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mousedown', () => { flashlightOn = !flashlightOn; });
+const keys = {};
+window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
+function update() {
+    if (player.sanity <= 0) return;
+
+    // Gerakan Player
+    if (keys['w']) player.y -= player.speed;
+    if (keys['s']) player.y += player.speed;
+    if (keys['a']) player.x -= player.speed;
+    if (keys['d']) player.x += player.speed;
+
+    // Logika Hantu
+    ghosts.forEach(g => {
+        let dx = g.x - player.x;
+        let dy = g.y - player.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        // Jika hantu terkena cahaya senter dan jarak dekat
+        if (dist < 200 && flashlightOn) {
+            player.sanity -= 0.3;
+            // Hantu perlahan mendekat
+            g.x -= dx * 0.01;
+            g.y -= dy * 0.01;
+        }
+    });
+
+    sanityBar.style.width = player.sanity + "%";
+    if (player.sanity <= 0) msg.style.display = "block";
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. Gambar Hantu (Latar Belakang Gelap)
+    ghosts.forEach(g => {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.beginPath();
+        ctx.ellipse(g.x, g.y, 15, 40, 0, 0, Math.PI * 2); // Bentuk lonjong seperti Pocong
+        ctx.fill();
+        // Mata merah
+        ctx.fillStyle = "red";
+        ctx.fillRect(g.x-5, g.y-20, 3, 3);
+        ctx.fillRect(g.x+2, g.y-20, 3, 3);
+    });
+
+    // 2. Efek Kegelapan & Senter (Masking)
+    ctx.save();
+    ctx.fillStyle = "black";
+    if (flashlightOn) {
+        // Membuat lubang cahaya di kegelapan
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        ctx.arc(player.x, player.y, 150, 0, Math.PI * 2, true);
+        ctx.fill();
+    } else {
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.restore();
+
+    // 3. Gambar Karakter Utama
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    requestAnimationFrame(() => {
+        update();
+        draw();
+    });
+}
+
+draw();
+</script>
+</body>
+</html>
+
